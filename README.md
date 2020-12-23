@@ -1,2 +1,8 @@
 # elsevier-search
-![image](https://github.com/wuyuuu/elsevier-search/blob/main/imgs/TITLE-ABS-KEY((3D)%20and%20(human%20pose%20estimation)).pdf)
+Run `python histgram.py` to visualize trends for 
+* 3D human pose estimation 
+* efficient human pose estimation 
+* multi-person pose estimation 
+* multimodal fusion in human pose estimation 
+
+Check out the result in [imgs](https://github.com/wuyuuu/elsevier-search/tree/main/imgs)
