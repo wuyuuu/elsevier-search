@@ -66,6 +66,7 @@ def draw_hist(list_of_keywords, years_range=range(2010, 2021), verbose=False, fo
     and visualize histogram of No. publication for 'query' in years_range.
     Save the result in 'imgs/query.pdf'
     Args:
+        forbidden (list[str]): forbidden keywords
         list_of_keywords (list[list[str]]): [[adj1,adj2],[subject1,subject2]]
         years_range (list[int]): range of cover years
         verbose (bool): if true, show title of each paper
