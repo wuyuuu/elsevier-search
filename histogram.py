@@ -5,9 +5,10 @@ from pybliometrics.scopus import ScopusSearch, AbstractRetrieval
 import matplotlib.pyplot as plt
 
 
-def make_query(list_of_keywords, year=None):
+def make_query(list_of_keywords, year=None, forbidden=None):
     """
     Args:
+        forbidden (List[str]) : forbidden keywords
         list_of_keywords (list[list[str]]): [['adj1','adj2'],['subject1','subject2'],[constraint1, constraint2]]
         year (int or str) : some cover year
     Returns:
@@ -23,11 +24,16 @@ def make_query(list_of_keywords, year=None):
         ans += '(%s)' % s
         if query_keywords != list_of_keywords[-1]:
             ans += ' and '
+    if forbidden is not None:
+        for forbidden_word in forbidden:
+            ans += " and not %s" % forbidden_word
+
     ans = "TITLE-ABS-KEY(%s)" % ans
     if year is not None:
         if not isinstance(year, str):
             year = str(year)
         ans = ans + ' AND PUBYEAR IS %s' % year
+
     return ans
 
 
@@ -39,7 +45,7 @@ def quickSearch(query, verbose=False):
     Returns:
         int: No. publications for query
     """
-    a = ScopusSearch(query, refresh=False)
+    a = ScopusSearch(query, refresh=True)
     e_ids = a.get_eids()
 
     # print(a.get_results_size())
@@ -54,7 +60,7 @@ def quickSearch(query, verbose=False):
     return a.get_results_size()
 
 
-def draw_hist(list_of_keywords, years_range=range(2010, 2021), verbose=False):
+def draw_hist(list_of_keywords, years_range=range(2010, 2021), verbose=False, forbidden=None):
     """
     Generate scopusSearch query given keywords and cover years
     and visualize histogram of No. publication for 'query' in years_range.
@@ -69,14 +75,18 @@ def draw_hist(list_of_keywords, years_range=range(2010, 2021), verbose=False):
     """
     pubs_per_year = []
     for year in years_range:
-        query = make_query(list_of_keywords, year)
+        query = make_query(list_of_keywords, year, forbidden)
         print('query:%s' % query)
         number_of_publications = quickSearch(query, verbose)
         pubs_per_year.append(number_of_publications)
     plt.bar(years_range, pubs_per_year)
     plt.xlabel('Year')
     plt.ylabel('No. publication')
-    plt.savefig('imgs/%s' % make_query(list_of_keywords) + '.pdf')
+    path = make_query(list_of_keywords,None,forbidden)
+    path.replace(' ','_')
+    path.strip('"')
+    plt.savefig(
+        'imgs/%s' % path + '.pdf')
     plt.close()
 
 
@@ -97,7 +107,7 @@ if __name__ == '__main__':
     draw_hist([adj, subject])
 
     # visualize trends of multi-modal human pose estimation
-    adj = ["multi-modal", "multimodal", "IMUs", "IMU", "IMU-aware", "radio signal", "WiFi"]
+    adj = ["multi-modal", "multimodal", "IMUs", "radio signal"]
     subject = ["human pose estimation"]
-    constraint = ["fusion"]
-    draw_hist([adj, subject, constraint])
+    forbidden = ["distribution"]
+    draw_hist([adj, subject], verbose=True, forbidden=forbidden)
