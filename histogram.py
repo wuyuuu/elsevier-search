@@ -5,10 +5,9 @@ from pybliometrics.scopus import ScopusSearch, AbstractRetrieval
 import matplotlib.pyplot as plt
 
 
-def make_query(list_of_keywords, year=None, forbidden=None):
+def make_query(list_of_keywords, year=None, forbidden=None, ):
     """
     Args:
-        forbidden (List[str]) : forbidden keywords
         list_of_keywords (list[list[str]]): [['adj1','adj2'],['subject1','subject2'],[constraint1, constraint2]]
         year (int or str) : some cover year
     Returns:
@@ -24,16 +23,13 @@ def make_query(list_of_keywords, year=None, forbidden=None):
         ans += '(%s)' % s
         if query_keywords != list_of_keywords[-1]:
             ans += ' and '
-    if forbidden is not None:
-        for forbidden_word in forbidden:
-            ans += " and not %s" % forbidden_word
-
+    if forbidden:
+        ans += 'and not %s' % ''.join(forbidden)
     ans = "TITLE-ABS-KEY(%s)" % ans
     if year is not None:
         if not isinstance(year, str):
             year = str(year)
         ans = ans + ' AND PUBYEAR IS %s' % year
-
     return ans
 
 
@@ -60,13 +56,12 @@ def quickSearch(query, verbose=False):
     return a.get_results_size()
 
 
-def draw_hist(list_of_keywords, years_range=range(2010, 2021), verbose=False, forbidden=None):
+def draw_hist(list_of_keywords, years_range=range(2011, 2022), verbose=False, forbidden=None):
     """
     Generate scopusSearch query given keywords and cover years
     and visualize histogram of No. publication for 'query' in years_range.
     Save the result in 'imgs/query.pdf'
     Args:
-        forbidden (list[str]): forbidden keywords
         list_of_keywords (list[list[str]]): [[adj1,adj2],[subject1,subject2]]
         years_range (list[int]): range of cover years
         verbose (bool): if true, show title of each paper
@@ -76,18 +71,22 @@ def draw_hist(list_of_keywords, years_range=range(2010, 2021), verbose=False, fo
     """
     pubs_per_year = []
     for year in years_range:
-        query = make_query(list_of_keywords, year, forbidden)
+        query = make_query(list_of_keywords, year, forbidden=forbidden)
         print('query:%s' % query)
+        # import math
+        # number_of_publications = 2**(year-2000)
         number_of_publications = quickSearch(query, verbose)
-        pubs_per_year.append(number_of_publications)
+        pubs_per_year.append(int(number_of_publications))
+        print(pubs_per_year[-1])
+    print(pubs_per_year)
+    fontsize = 18
+    plt.rcParams['font.size'] = fontsize
     plt.bar(years_range, pubs_per_year)
-    plt.xlabel('Year')
-    plt.ylabel('No. publication')
-    path = make_query(list_of_keywords,None,forbidden)
-    path.replace(' ','_')
-    path.strip('"')
-    plt.savefig(
-        'imgs/%s' % path + '.pdf')
+    # plt.xticks(years_range)
+    plt.xlabel('Year', fontsize=fontsize)
+    plt.ylabel('No. publication', fontsize=fontsize)
+    plt.tight_layout()
+    plt.savefig('imgs/%s' % make_query(list_of_keywords).replace('\"', '') + '.pdf')
     plt.close()
 
 
@@ -95,12 +94,14 @@ if __name__ == '__main__':
     # visualize trends of multi-person pose estimation
     adj = ["multi-person", "crowd"]
     subject = ["multi-person pose estimation", "human pose estimation"]
+    res = ["deep learning", "neural networks", "neural network"]
     draw_hist([adj, subject])
 
     # visualize trends of efficient human pose estimation
     adj = ["efficient", "real-time"]
     subject = ["human pose estimation"]
-    draw_hist([adj, subject])
+    res = ["deep learning", "neural networks", "neural network"]
+    draw_hist([adj, subject, res])
 
     # visualize trends of 3D huamn pose estimation
     adj = ['3D']
@@ -108,7 +109,8 @@ if __name__ == '__main__':
     draw_hist([adj, subject])
 
     # visualize trends of multi-modal human pose estimation
-    adj = ["multi-modal", "multimodal", "IMUs", "radio signal"]
+    adj = ["multi-modal", "multimodal", "IMUs", "radio signal", "RGB-D"]
+    adj2 = ["3D"]
     subject = ["human pose estimation"]
     forbidden = ["distribution"]
-    draw_hist([adj, subject], verbose=True, forbidden=forbidden)
+    draw_hist([adj, subject], verbose=False, forbidden=forbidden)
