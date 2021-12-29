@@ -3,6 +3,9 @@ from pyecharts import options as opts
 import collections
 from pybliometrics.scopus import ScopusSearch, AbstractRetrieval
 import matplotlib.pyplot as plt
+import numpy as np
+
+REFRESH = True
 
 
 def make_query(list_of_keywords, year=None, forbidden=None, ):
@@ -41,7 +44,9 @@ def quickSearch(query, verbose=False):
     Returns:
         int: No. publications for query
     """
-    a = ScopusSearch(query, refresh=True)
+    a = ScopusSearch(query, refresh=REFRESH)
+    if not REFRESH:
+        return a.get_results_size()
     e_ids = a.get_eids()
 
     # print(a.get_results_size())
@@ -54,6 +59,13 @@ def quickSearch(query, verbose=False):
         print(type(ab.coverDate), ab.coverDate)
         # dates.append(int(ab.coverDate[:4]))
     return a.get_results_size()
+
+
+def fit_y_poly(x, y, x_curve):
+    k = np.polyfit(x, y, 4)
+    p = np.poly1d(k)
+    pred_y = p(x_curve)
+    return pred_y
 
 
 def draw_hist(list_of_keywords, years_range=range(2011, 2022), verbose=False, forbidden=None):
@@ -82,11 +94,14 @@ def draw_hist(list_of_keywords, years_range=range(2011, 2022), verbose=False, fo
     fontsize = 18
     plt.rcParams['font.size'] = fontsize
     plt.bar(years_range, pubs_per_year)
+    x_curve = np.linspace(np.min(years_range[:-1]), np.max(years_range[:-1]), 500)
+    pred_y = fit_y_poly(years_range[:-1], pubs_per_year[:-1], x_curve)
+    plt.plot(x_curve, pred_y, linestyle='--', c='r', linewidth=4)
     # plt.xticks(years_range)
     plt.xlabel('Year', fontsize=fontsize)
     plt.ylabel('No. publication', fontsize=fontsize)
     plt.tight_layout()
-    plt.savefig('imgs/%s' % make_query(list_of_keywords).replace('\"', '') + '.pdf')
+    plt.savefig('imgs/%s' % make_query(list_of_keywords).replace('\"', '') + '.pdf', bbox_inches='tight')
     plt.close()
 
 
